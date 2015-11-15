@@ -19,6 +19,7 @@
 <script src="js/jquery.tmpl.js"></script>
 <script src="js/easytemplate.js"></script>
 <script src="js/underscore.js"></script>
+<script src="js/etpl.js"></script>
 
 
 <script>
@@ -37,8 +38,8 @@ for (var i = 0; i < length; i ++) {
         user: '<strong style="color:red">糖饼</strong>',
         site: 'http://www.planeart.cn',
         weibo: 'http://weibo.com/planeart',
-        QQweibo: 'http://t.qq.com/tangbin'  
-    }); 
+        QQweibo: 'http://t.qq.com/tangbin'
+    });
 };
 
 
@@ -56,19 +57,22 @@ var testList = [
             }
         }
     },
-    
+
     {
         name: 'juicer',
         tester: function () {
-            var config = {cache:true};
-
+            juicer.set({
+                'errorhandling': true,
+                'cache': true
+            });
             var source = document.getElementById('juicer').innerHTML;
+            var fn = juicer(source);
             for (var i = 0; i < number; i ++) {
-                juicer.to_html(source, data, config);
+                fn.render(data);
             }
         }
     },
-    
+
     {
         name: 'doT',
         tester: function () {
@@ -79,7 +83,7 @@ var testList = [
             }
         }
     },
-    
+
     {
         name: 'Handlebars',
         tester: function () {
@@ -90,7 +94,22 @@ var testList = [
             }
         }
     },
-    
+
+    {
+        name: 'etpl',
+        tester: function () {
+            // dont escape html
+            etpl.config({
+                defaultFilter: ''
+            });
+            var source = document.getElementById('etpl').innerHTML;
+            var fn = etpl.compile(source);
+            for (var i = 0; i < number; i ++) {
+                fn(data);
+            }
+        }
+    },
+
     {
         name: 'tmpl',
         tester: function () {
@@ -101,7 +120,7 @@ var testList = [
             }
         }
     },
-    
+
     {
         name: 'easyTemplate',
         tester: function () {
@@ -124,7 +143,7 @@ var testList = [
             }
         }
     },
-    
+
     {
         name: 'baiduTemplate',
         tester: function () {
@@ -135,7 +154,7 @@ var testList = [
             }
         }
     },
-    
+
      // jqueryTmpl 太慢，可能导致浏览器停止响应
     /*{
         name: 'jqueryTmpl',
@@ -146,17 +165,18 @@ var testList = [
             }
         }
     },*/
-    
+
     {
         name: 'Mustache',
         tester: function () {
             var source = document.getElementById('Mustache').innerHTML;
+            var fn = Mustache.compile(source);
             for (var i = 0; i < number; i ++) {
-                Mustache.to_html(source, data);
+                fn(data);
             }
         }
     }
-    
+
 ];
 
 KISSY.use('template',function(S,T) {
@@ -164,9 +184,10 @@ KISSY.use('template',function(S,T) {
         name: 'kissyTemplate',
         tester: function () {
             var source= document.getElementById('kissy').innerHTML;
+            var fn = T(source);
 
             for (var i = 0; i < number; i ++) {
-                T(source).render(data);
+                fn.render(data);
             }
         }
     });
@@ -182,7 +203,7 @@ var startTest = function () {
     Timer.prototype.stop = function(){
         return + new Date - this.startTime;
     };
-    
+
     var colors = Highcharts.getOptions().colors;
     var categories = [];
 
@@ -204,7 +225,7 @@ var startTest = function () {
         subtitle: {
             text: length + ' 条数据 × ' + number + ' 次渲染'
         },
-                
+
         xAxis: {
             categories: categories,
             labels: {
@@ -253,39 +274,39 @@ var startTest = function () {
         }]
 
     });
-    
+
     var log = function (message) {
         document.getElementById('log').innerHTML = message;
     };
-    
+
     var tester = function (target) {
-    
-        
+
+
         var time = new Timer;
         target.tester();
         var endTime = time.stop();
-        
+
         chart.series[0].addPoint({
             color: colors.shift(),
             y: endTime
         });
-        
-        
+
+
         if (!testList.length) {
             log('测试已完成，请不要迷恋速度');
             return;
         }
 
         target = testList.shift();
-        
+
         log('正在测试: ' + target.name + '..');
-        
+
         setTimeout(function () {
             tester(target);
         }, 500);
-        
+
     };
-    
+
     var target = testList.shift();
     log('正在测试: ' + target.name + '..');
     tester(target);
@@ -353,6 +374,15 @@ var startTest = function () {
 </ul>
 </script>
 
+<!--etpl 的模板 -->
+<script id="etpl" type="text/tmpl">
+<ul>
+    <!--for: ${list} as ${val} -->
+        <li>用户: ${val.user}/ 网站：${val.site}</li>
+    <!--/for-->
+</ul>
+</script>
+
 <!-- doT 的模板 -->
 <script id="doT" type="text/tmpl">
 <ul>
@@ -396,7 +426,7 @@ var startTest = function () {
 <ul>
   <& for (var val, i = 0, l = @list.length; i < l; i ++) { &>
         <& val = @list[i]; &>
-        <li>用户: <&= val.user &>； 网站：<&= val.site &></li> 
+        <li>用户: <&= val.user &>； 网站：<&= val.site &></li>
   <& } &>
 </ul>
 </script>
